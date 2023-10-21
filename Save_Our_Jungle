@@ -1,0 +1,291 @@
+var numberConstruction = 0;
+onEvent("startBttn", "click", function() {
+  console.log("startBttn clicked!");
+  setScreen("helpScreen");
+});
+onEvent("nextBttn", "click", function() {
+  console.log("nextBttn clicked!");
+  hideElement("monkeyImage");
+  hideElement("monkeySpeaksText");
+  hideElement("nextBttn");
+  showElement("howToPlayText");
+  showElement("playBttn");
+});
+var timer30Text = 30;
+onEvent("playBttn", "click", function() {
+  console.log("playBttn clicked!");
+  setScreen("gameScreen");
+  setText("numConstructionClicked", numberConstruction);
+  fixedTimer();
+  timer30Text = 30;
+});
+function fixedTimer() {
+  setTimeout(function() {
+    checkWinOrLose();
+  }, 31000);
+  setInterval(function() {
+    setText("timerText", "Timer: " + timer30Text);
+    timer30Text = timer30Text - 1;
+  }, 1000);
+}
+onEvent("constructMach1", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach1");
+  showElement("constructMach8");
+});
+onEvent("constructMach8", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach8");
+  showElement("constructMach3");
+});
+onEvent("constructMach3", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach3");
+  showElement("constructMach9");
+});
+onEvent("constructMach9", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach9");
+  showElement("constructMach4");
+});
+onEvent("constructMach4", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach4");
+  showElement("constructMach10");
+});
+onEvent("constructMach10", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach10");
+  showElement("constructMach6");
+});
+onEvent("constructMach6", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach6");
+  showElement("constructMach2");
+});
+onEvent("constructMach2", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach2");
+  showElement("constructMach7");
+});
+onEvent("constructMach7", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach7");
+  showElement("constructMach5");
+});
+onEvent("constructMach5", "click", function() {
+  numberConstruction = numberConstruction + 1;
+  setText("numConstructionClicked", numberConstruction);
+  hideElement("constructMach5");
+  checkWinOrLose();
+});
+function checkWinOrLose() {
+  if (numberConstruction >= 10) {
+    setScreen("winScreen");
+    hide();
+    speed(100);
+    drawBackground();
+    drawGround();
+    drawAllTrees();
+    drawAllPlants();
+    drawAllGrass();
+    drawAllVines();
+    drawAllSunbeams();
+  } else {
+    setScreen("loseScreen");
+  }
+}
+function drawBackground() {
+  penColor("LightBlue");
+  dot(500);
+  penUp();
+}
+function drawGround() {
+  //There was no easier way to fill in the ground by my knowledge
+  penRGB(181, 101, 29, 1);
+  moveTo(0, 360);
+  penWidth(30);
+  penDown();
+  moveTo(320, 360);
+  turnTo(180);
+  moveForward(25);
+  moveTo(0, 385);
+  moveForward(25);
+  moveTo(320, 410);
+  moveForward(25);
+  moveTo(0, 435);
+  penUp();
+}
+function drawAllTrees() {
+  for (var i = 0; i < 7; i++) {
+    drawTree(randomNumber(10, 25), randomNumber(15, 20), randomNumber(50, 150));
+  }
+}
+function drawTree(sizeRoots, widthRootsTrunk, sizeTrunk) {
+  //this draws the roots
+  moveTo(randomNumber(30, 290), 360);
+  penRGB(70, 0, 10, 1);
+  //widthRootsTrunk is the width of the pen for the roots and trunk since both commands are the same number
+  penWidth(widthRootsTrunk);
+  penDown();
+  turnRight(60);
+  moveForward(sizeRoots);
+  moveBackward(sizeRoots);
+  turnLeft(120);
+  moveForward(sizeRoots);
+  moveBackward(sizeRoots);
+  //This draws the trunk
+  turnTo(360);
+  penWidth(widthRootsTrunk);
+  moveForward(sizeTrunk);
+  drawLeaves(50, 35);
+  penUp();
+  turnTo(180);
+}
+//sizeBundle means the leaves asa whole on the tree. sizeDots means the actual individual dots that make up the leavs
+function drawLeaves(sizeBundle, sizeDots) {
+  penColor("darkGreen");
+  moveForward(sizeBundle);
+  for (var i = 0; i < 4; i++) {
+    moveForward(sizeBundle);
+    dot(sizeDots);
+    moveBackward(sizeBundle);
+    turnRight(90);
+  }
+  penColor("green");
+  turnRight(45);
+  //The dot size here that makes the cool 4 diamond pattern in the leaves is 35
+  for (var i = 0; i < 4; i++) {
+    moveForward(sizeBundle);
+    dot(sizeDots);
+    moveBackward(sizeBundle);
+    turnRight(90);
+  }
+}
+function drawAllPlants() {
+  for (var i = 0; i < 10; i++) {
+    drawBigPlants(randomNumber(50, 75));
+    turnTo(180);
+    drawSmallPlants(randomNumber(25, 40));
+    turnTo(180);
+  }
+}
+//There is no real reason for the differences between the big and small plants other than that I wanted more of a variety
+function drawBigPlants(size) {
+  moveTo(randomNumber(15, 320), randomNumber(300, 360));
+  penRGB(46, 139, 87, 1);
+  penWidth(7);
+  penDown();
+  moveForward(size);
+  turnLeft(135);
+  moveForward(size);
+  moveBackward(size);
+  turnRight(270);
+  moveForward(size);
+  moveBackward(size);
+  turnRight(45);
+  penUp();
+}
+function drawSmallPlants(size) {
+  moveTo(randomNumber(15, 320), randomNumber(340, 380));
+  penRGB(50, 220, 20, 1);
+  penWidth(7);
+  penDown();
+  moveForward(size);
+  turnLeft(135);
+  moveForward(size);
+  moveBackward(size);
+  turnRight(270);
+  moveForward(size);
+  moveBackward(size);
+  turnRight(45);
+  penUp();
+}
+function drawAllGrass() {
+  for (var i = 0; i < 300; i++) {
+    drawDarkGrass();
+    drawLightGrass();
+  }
+}
+//I also added the difference in color here just for a variety. There is no real difference between the dark and light grass.
+function drawDarkGrass() {
+  moveTo(randomNumber(5, 320), randomNumber(380, 425));
+  penRGB(11, 102, 35, 1);
+  penWidth(3);
+  penDown();
+  moveForward(25);
+  penUp();
+}
+function drawLightGrass() {
+  moveTo(randomNumber(5, 320), randomNumber(380, 425));
+  penRGB(76, 187, 23, 1);
+  penWidth(3);
+  penDown();
+  moveForward(25);
+  penUp();
+}
+//Again, variety, but this time I changed the color of the small vines because I didn't like how the big and small easy overlapped when they were the same color. 
+function drawAllVines() {
+  drawBigVines(50);
+  drawSmallVines(25);
+}
+function drawBigVines(size) {
+  for (var i = 0; i < 15; i++) {
+    moveTo(randomNumber(0, 320), 0);
+    penRGB(11, 102, 35, 1);
+    penWidth(10);
+    penDown();
+    arcLeft(30,size);
+    arcRight(60,size);
+    arcLeft(60,size);
+    arcRight(60,size);
+    penUp();
+    turnLeft(30);
+  }
+}
+function drawSmallVines(size) {
+  for (var i = 0; i < 15; i++) {
+    moveTo(randomNumber(0, 320), 0);
+    penRGB(46, 139, 35, 1);
+    penWidth(10);
+    penDown();
+    arcLeft(30,size);
+    arcRight(60,size);
+    arcLeft(60,size);
+    arcRight(60,size);
+    penUp();
+    turnLeft(30);
+  }
+}
+function drawAllSunbeams() {
+  for (var i = 0; i < 50; i++) {
+    drawSunbeam(randomNumber(100, 200));
+  }
+}
+function drawSunbeam(size){
+  moveTo(randomNumber(0, 320), 0);
+  penWidth(randomNumber(1, 15));
+  penRGB(255,255,255,0.15);
+  penDown();
+  turnLeft(25);
+  moveForward(size);
+  penUp();
+  turnRight(25);
+}
+onEvent("tryAgainBttn", "click", function() {
+  console.log("tryAgainBttn clicked!");
+  setScreen("welcomeScreen");
+});
+onEvent("playAgainBttn", "click", function() {
+  console.log("playAgainBttn clicked!");
+  setScreen("welcomeScreen");
+});
