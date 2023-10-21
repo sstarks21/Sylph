@@ -1,0 +1,348 @@
+;;1. Bignums are either empty to represent 0 or a digits list, with each digit being in reverse order than the number they are representing. For example, the 
+;; number 12345 would be represented as a bignum as (list 5 4 3 2 1), and 0 would be represented as empty. I chose this particular implementation because I 
+;; wanted a representation that was similar to the normal Arabic numeral methods in order to be easier to work with, but that was better suited to be compatible 
+;; with Racket. Thus, I needed each digit to be isolated, so I used a cons list. I also put them in reverse order because Racket reads operations left to right,
+;; and normally we do arithmetic such as sums and products right to left. 0 was made empty in order to be better utilized for lists, and then I could use (empty?)
+;; to check for the number 0 instead of using a more complex and wordy check.
+
+
+
+;; 2. To add two bignums together, one would write (bignum+ bignum1 bignum2), with bignum1 being any bignum and bignum2 being another bignum. For example, to
+;; add 18 + 21 to evaluate to 39, one would write (bignum+ (list 8 1) (list 1 2)), and it would output (list 9 3). The same applies to bignum*, where one would 
+;; write (bignum* bignum1 bignum2). For example, to multiply 3 * 5 to evaluate to 15, one would write (bignum+ (list 3) (list 5)), and it would output (list 5 1).
+
+
+
+;; 3. Bignum+ has one helper method that adds a one to the first item of the next RI if there needs to be a carry. This gets called if the sum of the current 
+;; digit of bignum1 and the current digit of bignum2 is greater than 10, in which the sum is subtracted by 10 when it is added to the new list. If either bignum1
+;; or bignum2 reaches empty after the recursion, then the other is added to the end of the list.
+
+#lang racket/base
+(provide digit-add
+         digit-sub
+         digit-mul
+         digit-quo
+         digit-rem)
+
+;; This file provides the built-in arithmetic procedures required
+;; to implement limited precision arithmetic with bignums.
+
+;; digit-add : num * num -> num
+
+;; Input: two natural numbers between 0 and 99, a and b
+;; Output: the sum of the a and b, or an error if
+;;         a, b or their sum is outside the range [0,99]
+
+(define (digit-add a b)
+  (if (and (integer? a)
+           (integer? b)
+           (<= 0 a)
+           (<= a 99)
+           (<= 0 b)
+           (<= b 99)
+           (<= (+ a b) 99))
+      (+ a b)
+      (error 'digit-add "inputs or output out of range. tried (+ ~a ~a) " a b)))
+
+
+;; digit-sub : num * num -> num
+
+;; Input: two natural numbers between 0 and 99, a and b
+;; Output: the result of subtracting b from a, or an error if
+;;         a or b or their difference is outside the range [0,99]
+
+(define (digit-sub a b)
+  (if (and (integer? a)
+           (integer? b)
+           (<= 0 a)
+           (<= a 99)
+           (<= 0 b)
+           (<= b 99)
+           (<= (- a b) 99)
+           (<= 0 (- a b)))
+      (- a b)
+      (error 'digit-sub "inputs or output out of range. tried (- ~a ~a) " a b)))
+
+;; digit-mul : num * num -> num
+
+;; Input: two natural numbers between 0 and 99, a and b
+;; Output: the product of the inputs, or an error if
+;;         a or b or their product is outside the range [0,99]
+
+(define (digit-mul a b)
+  (if (and (integer? a)
+           (integer? b)
+           (<= 0 a)
+           (<= a 99)
+           (<= 0 b)
+           (<= b 99)
+           (<= (* a b) 99))
+      (* a b)
+      (error 'digit-mul "inputs or output out of range. tried (* ~a ~a) " a b)))
+
+;; digit-quo : num * num -> num
+
+;; Input: two natural numbers between 0 and 99, a and b
+;; Output: the quotient of dividend a and divisor b, or an error if
+;;         a or b or their quotient is outside the range [0,99]
+
+(define (digit-quo a b)
+  (if (and (integer? a)
+           (integer? b)
+           (<= 0 a)
+           (<= a 99)
+           (<= 0 b)
+           (<= b 99))
+      (quotient a b)
+      (error 'digit-quo "inputs or output out of range. tried (quotient ~a ~a) " a b)))
+
+;; digit-rem : num * num -> num
+
+;; Input: two natural numbers between 0 and 99, a and b
+;; Output: the remainder of dividend a and divisor b, or an error if
+;;         a or b or the remainder is outside the range [0,99]
+
+(define (digit-rem a b)
+  (if (and (integer? a)
+           (integer? b)
+           (<= 0 a)
+           (<= a 99)
+           (<= 0 b)
+           (<= b 99))
+      (remainder a b)
+      (error 'digit-rem "inputs or output out of range. tried (remainder ~a ~a) " a b)))
+
+(require "bignum-operators.rkt")
+;; Data Definition
+;; num, digits, bignum
+;;
+;; a digit is a number 0-9
+;; nothing else is a digit
+;; 
+;; a bignum is either
+;; empty to represent the number 0
+;; a list of digits (numbers 0-9) to represent the same series of digits in
+;; reverse order (bignums will always represent integers >= 0 (natural numbers))
+;; nothing else is a bignum
+;;
+;; examples:
+;; num: 3, -4, 0
+;; digit: 1, 4, 0, 9
+;; bignum:
+;; (cons 3 (cons 2 (cons 1 empty))) = 123
+;; (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 empty))))) = 54321
+;; empty = 0
+;;
+;; bignum+: bignum * bignum -> bignum
+;; Input: bignum1, a bignum
+;;        bignum2, another bignum
+;; Output: a bignum equivalent to the sum of bignum1 and bignum2
+;;
+;; RECURSION DIAGRAMS:
+;; OI: (list 3) (list 5)
+;; RI: empty empty
+;; RO: empty
+;; Ideation: Cons the sum of the first digit in bignum1 and the first digit in
+;; bignum2
+;; OO: (list 8)
+;;
+;; OI: (list 2 1) (list 5)
+;; RI: (list 1) empty
+;; RO: (list 1)
+;; Ideation: Cons the sum of the first digit in bignum1 and the first digit in
+;; bignum2
+;; OO: (list 7 1)
+;;
+;; OI: (list 6) (list 5)
+;; RI: (list 1) empty
+;; RO: (list 1)
+;; Ideation: If the sum of the first digit in both bignum1 and bignum2 are
+;; greater than 10, then cons that sum - 10 to RO and call carry helper
+;; procedure. If not, then cons that sum to RO.
+;; OO: (list 1 1)
+;;
+;; OI: (list 9 9) (list 2 2)
+;; RI: (list 10) (list 2)
+;; RO: (list 2 1)
+;; Ideation: If the sum of the first digit in both bignum1 and bignum2 are
+;; greater than 10, then cons that sum - 10 to RO. If not, then cons that sum to
+;; RO.
+;; OO: (list 1 2 1)
+
+
+(define (bignum+ bignum1 bignum2)
+  (cond
+   [(empty? bignum1) (helper2 bignum2)]
+   [(and (empty? bignum2) (not (empty? bignum1))) (helper2 bignum1)]
+   [(< (digit-add (first bignum1) (first bignum2)) 10)
+    (cons (digit-add (first bignum1) (first bignum2))
+          (bignum+ (rest bignum1) (rest bignum2)))]
+   [(and (empty? (rest bignum1)) (empty? (rest bignum2)))
+        (cons (digit-sub (digit-add (first bignum1) (first bignum2))
+                 10) (list 1))]
+   [(empty? (rest bignum1))
+        (cons (digit-sub (digit-add (first bignum1) (first bignum2)) 10)
+              (bignum+ (rest bignum1) (carry (rest bignum2))))]
+   [(cons? (rest bignum1))
+        (cons (digit-sub (digit-add (first bignum1) (first bignum2)) 10)
+              (bignum+ (carry (rest bignum1)) (rest bignum2)))]))
+
+
+(define (helper2 bignum)
+  (cond
+    [(empty? bignum) empty]
+    [(cons? bignum) (if (= (first bignum) 10)
+                        (if (empty? (rest bignum))
+                            (cons 0 (cons 1 empty))
+                            (cons (digit-sub (first bignum) 10) (helper2
+                                                       (carry (rest bignum)))))
+                        (cons (first bignum) (helper2 (rest bignum))))]))
+
+;; carry: bignum -> bignum
+;; Input: bignum, a bignum
+;; Output: A bignum whose first item is one more than the original first item
+;; of bignum, followed by the rest of bignum.
+
+(define (carry bignum)
+  (cons (digit-add (first bignum) 1) (rest bignum)))
+
+;; Testing for bignum+
+(check-expect (bignum+ (list 3) (list 5)) (list 8))
+(check-expect (bignum+ (list 2 1) (list 5)) (list 7 1))
+(check-expect (bignum+ empty empty) empty)
+(check-expect (bignum+ (list 6) (list 4 1)) (list 0 2))
+(check-expect (bignum+ empty (list 4 5)) (list 4 5))
+(check-expect (bignum+ (list 6) (list 5)) (list 1 1))
+(check-expect (bignum+ (list 3 2) (list 9 5)) (list 2 8))
+(check-expect (bignum+ (list 7 6 3) (list 3 9 9)) (list 0 6 3 1))
+(check-expect (bignum+ (list 8 8 8 8 8 8 8 8) (list 8 8 8 8 8 8 8 8))
+              (list 6 7 7 7 7 7 7 7 1))
+(check-expect (bignum+ (list 1 2 3 4 5 6 7 8 9) (list 2 3))
+              (list 3 5 3 4 5 6 7 8 9))
+(check-expect (bignum+ (list 2 7 9 9 9 9 5 8) (list 8 8 0 0 0 4 7 9 0 5))
+              (list 0 6 0 0 0 4 3 8 1 5))
+(check-expect (bignum+ (list 5 1 4 5 5 5 1) empty) (list 5 1 4 5 5 5 1))
+(check-expect (bignum+ (list 9 9 9 9 9 9 9 9 9) (list 9 9 9 9 9 9 9 9 9))
+                       (list 8 9 9 9 9 9 9 9 9 1))
+(check-expect (bignum+ (list 9 9 9) (list 1)) (list 0 0 0 1))
+(check-expect (bignum+ (list 1) (list 9 9 9)) (list 0 0 0 1))
+
+;; bignum*: bignum * bignum -> bignum
+;; Input: bignum1, a bignum
+;;        bignum2, another bignum
+;; Output: a bignum equivalent to the product of bignum1 and bignum2
+
+(define (bignum* bignum1 bignum2)
+  (cond
+    [(or (empty? bignum1) (empty? bignum2)) empty]
+    [(>= (length bignum1) (length bignum2))
+     (bignum*-multi bignum1 bignum2)]
+    [(< (length bignum1)(length bignum2))
+     (bignum*-multi bignum2 bignum1)]))
+
+;; bignum*-multi: bignum * bignum -> bignum
+;; Input: bignum1, a bignum
+;;        bignum2, another bignum
+;; Output: a bignum equivalent to the product of bignum1 and bignum2
+
+;; RECURSION DIAGRAMS:
+;; OI: empty empty
+;; RI: N/A
+;; RO: N/A
+;; Ideation: Evaluate to empty
+;; OO: empty
+;;
+;; OI: (list 5) (list 3)
+;; RI: (list 5) empty
+;; RO: (list 1)
+;; Ideation: Add the product of the first item of bignum1 and the first item of
+;; bignum2 with (cons 0 RO)
+;; OO: (list 5 1)
+
+(define (bignum*-multi bignum1 bignum2)
+  (cond
+    [(empty? bignum2) empty]
+    [(cons? bignum2) (bignum+ (bignum*-single bignum1 bignum2 empty)
+                          (cons 0 (bignum*-multi bignum1 (rest bignum2))))]))
+
+;; bignum*-single: bignum * bignum * num -> bignum
+;; Input: bignum1, a bignum
+;;        bignum2, another bignum
+;;        carry, a num equivalent to the number carried from the previous
+;;               product-expression
+;; Output: a bignum equivalent to the sum of carry and the product of bignum1
+;;         and bignum2
+
+;; RECURSION DIAGRAMS:
+;; OI: empty empty 0
+;; RI: N/A
+;; RO: N/A
+;; Ideation: Evaluate to empty
+;; OO: empty
+;;
+;; OI: (list 2 1) (list 5) 0
+;; RI: (list 1) (list 5) 1
+;; RO: (list 6)
+;; Ideation: Cons the ones place of the product of the first item of bignum1
+;; and the first item of bignum2
+;; OO: (list 0 6)
+
+
+(define (bignum*-single bignuml bignums carry)
+  (cond
+    [(empty? bignuml) carry]
+    [(empty? (rest (single-times (first bignuml) (first bignums) carry)))
+     (cons (first (single-times (first bignuml) (first bignums) carry))
+           (bignum*-single (rest bignuml) bignums (ten-times (first bignuml)
+                                                      (first bignums) false)))]
+    [(cons? bignuml)
+     (cons (first (single-times (first bignuml) (first bignums) carry))
+           (bignum*-single (rest bignuml) bignums (ten-times (first bignuml)
+                                                    (first bignums) true)))]))
+
+;; single-times: bignum1 * bignum2 * num -> bignum
+;; Input: bignum1, a bignum
+;;        bignum2, another bignum
+;;        carry, a num equivalent to the number carried from the previous
+;;               product-expression
+;; Output: a bignum equivalent to the ones place of the product of bignum1 and
+;;         bignum2
+
+(define (single-times bignum1 bignum2 carry)
+  (bignum+ carry (list (digit-rem (digit-mul bignum1 bignum2) 10))))
+
+;; ten-times: bignum * bignum * boolean -> bignum
+;; Input: bignum1, a bignum
+;;        bignum2, another bignum
+;;        carry?, a boolean that's true if 1 needs to be carried/added to the
+;;                result, and false if not
+;; Output: a bignum equivalent to the tens place of the product of bignum1 and
+;;         bignum2
+
+(define (ten-times bignum1 bignum2 carry?)
+  (cond
+    [(zero? (digit-quo (digit-mul bignum1 bignum2) 10))
+     (if carry? (list 1) empty)]
+    [carry? (list (digit-add 1 (digit-quo (digit-mul bignum1 bignum2) 10)))]
+    [(not carry?) (list (digit-quo (digit-mul bignum1 bignum2) 10))]))
+
+(check-expect (bignum* (list 5) (list 1)) (list 5))
+(check-expect (bignum* (list 3) (list 5)) (list 5 1))
+(check-expect (bignum* (list 3 2) (list 5)) (list 5 1 1))
+(check-expect (bignum* (list 7) (list 7)) (list 9 4))
+(check-expect (bignum* (list 7 1) (list 7)) (list 9 1 1))
+(check-expect (bignum* (list 7 1 1) (list 7)) (list 9 1 8))
+(check-expect (bignum* (list 7 7) (list 7)) (list 9 3 5))
+(check-expect (bignum* empty empty) empty)
+(check-expect (bignum* (list 5) empty) empty)
+(check-expect (bignum* empty (list 6)) empty)
+(check-expect (bignum* (list 7) (list 7 1 1)) (list 9 1 8))
+(check-expect (bignum* (list 5 1) (list 1 2)) (list 5 1 3))
+(check-expect (bignum* (list 6 8) (list 1 5)) (list 6 8 3 4))
+(check-expect (bignum* (list 5 1) (list 1 2)) (list 5 1 3))
+(check-expect (bignum* (list 3 2 1) (list 1 2 3)) (list 3 8 4 9 3))
+(check-expect (bignum* (list 9 9) (list 8 9)) (list 2 0 7 9))
+(check-expect (bignum* (list 3 2 1) (list 3 2 1)) (list 9 2 1 5 1))
+(check-expect (bignum* (list 4 3 2 1) (list 4 3 2 1)) (list 6 5 7 2 2 5 1))
+(check-expect (bignum* (list 9 9 9 9 9) (list 9 9 9 9 9))
+              (list 1 0 0 0 0 8 9 9 9 9))
